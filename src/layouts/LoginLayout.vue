@@ -1,20 +1,17 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <h1>Prova</h1>
-    <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+  <q-layout view="hHh lpR fFf">
+    <q-page-container>
+      <router-view />
+    </q-page-container>
   </q-layout>
 </template>
 
 <script>
-
-
 export default {
-  name: 'MainLayout',
+  name: "LoginLayout",
 
-  data () {
-    return {
-
-    }
+  data() {
+    return {};
   }
-}
+};
 </script>

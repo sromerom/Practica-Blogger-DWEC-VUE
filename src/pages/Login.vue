@@ -1,12 +1,17 @@
 <template>
-  <q-page class="flex flex-center">
-      <h1>Prova</h1>
-    <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+  <q-page>
+      <h2>Login</h2>
+      <gsigninbutton></gsigninbutton>
   </q-page>
 </template>
- <script src="https://apis.google.com/js/platform.js" async defer></script>
+
 <script>
+import gsigninbutton from 'components/GoogleButton';
 export default {
+  
   name: "PageLogin",
+  components: {
+    gsigninbutton,
+  },
 };
 </script>
