@@ -17,7 +17,7 @@
         save: {
           tip: 'Save your work',
           icon: 'save',
-          label: 'Save',
+          label: 'Crea post',
           handler: saveWork
         }
       }"
@@ -53,7 +53,6 @@ export default {
   },
   methods: {
     async saveWork() {
-      alert("guadant");
       const tagIdiomesSeleccionat = [
         this.selectIdiomes[0].value,
         this.selectIdiomes[1].value
@@ -73,15 +72,14 @@ export default {
             tagIdiomesSeleccionat
           )
         );
+
+        this.$q.notify({
+          message: "Creat el post correctament",
+          color: "green-4",
+          textColor: "white",
+          icon: "cloud_done"
+        });
       }
-      /*
-      this.$q.notify({
-        message: "Saved your text to local storage",
-        color: "green-4",
-        textColor: "white",
-        icon: "cloud_done"
-      });
-      */
     }
   },
   async mounted() {
