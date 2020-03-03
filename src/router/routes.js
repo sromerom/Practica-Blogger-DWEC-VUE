@@ -5,6 +5,9 @@ const routes = [
     children: [
       { path: '', component: () => import('pages/Login.vue') }
     ],
+    meta: {
+      requiresAuth: false
+    }
   },
   {
     path: '/post',
@@ -12,6 +15,9 @@ const routes = [
     children: [
       { path: '', component: () => import('pages/BloggerList.vue') }
     ],
+    meta: {
+      requiresAuth: true
+    }
   }
 ];
 

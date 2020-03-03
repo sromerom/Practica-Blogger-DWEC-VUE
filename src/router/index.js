@@ -14,8 +14,9 @@ Vue.use(VueRouter)
  * with the Router instance.
  */
 
-export default function (/* { store, ssrContext } */) {
+export default function (store) {
   const Router = new VueRouter({
+    mode: 'history',
     scrollBehavior: () => ({ x: 0, y: 0 }),
     routes,
 
@@ -25,6 +26,20 @@ export default function (/* { store, ssrContext } */) {
     mode: process.env.VUE_ROUTER_MODE,
     base: process.env.VUE_ROUTER_BASE
   })
+  Router.beforeEach((to, from, next) => {
+    // See if any of the matched routes has meta "requiresAuth"
+    if (to.matched.some(route => route.meta.requiresAuth)) {
+      console.log(store)
 
+
+      if (localStorage.getItem('tokenAccess')) {
+        next();
+      } else {
+        next("/");
+      }
+    } else {
+      next();
+    }
+  });
   return Router
 }
