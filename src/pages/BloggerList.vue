@@ -1,6 +1,6 @@
 <template>
   <div class="q-pa-md">
-    <q-table title="Treats" :data="data" :columns="columns" row-key="name">
+    <q-table title="Receptes" :data="data" :columns="columns" row-key="name">
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
           <q-btn dense round flat color="grey" @click="editRow(props)" icon="edit"></q-btn>
@@ -11,9 +11,9 @@
   </div>
 </template>
 <script>
-import { getBlogId } from "../boot/postServei.js";
-//import { getBlogId, getPost, deletePost } from './servei/postServei.js';
+import { getBlogId, getPost, deletePost } from "../boot/postServei.js";
 export default {
+  name: 'BloggerList',
   data() {
     return {
       columns: [
@@ -29,7 +29,7 @@ export default {
         {
           name: "idiomaOriginal",
           align: "center",
-          label: "Calories",
+          label: "Idioma Original",
           field: "idiomaOriginal",
           sortable: true
         },
@@ -50,26 +50,20 @@ export default {
     },
     deleteRow(props) {
       alert("Elimina!!");
-    },
-    getBlogId() {
-
     }
   },
   async mounted() {
     let blogId = await getBlogId();
-    console.log(blogId);
-  }
+    let posts = await getPost(blogId);
 
-  /*
-  let response = await fetch("https://www.googleapis.com/blogger/v3/users/self/blogs", {
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem("tokenAccess")
-        },
+    posts.map(post => {
+      let objecteAfegir = {
+        name: post.title,
+        idiomaOriginal: post.labels[0],
+        idiomaTraduit: post.labels[1]
+      };
+      this.data.push(objecteAfegir);
     });
-
-    let responseJSON = await response.json();
-    return responseJSON.items[0].id;
-  */
+  }
 };
 </script>
