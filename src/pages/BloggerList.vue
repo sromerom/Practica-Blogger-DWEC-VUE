@@ -11,7 +11,6 @@
   </div>
 </template>
 <script>
-import { getBlogId, getPost, deletePost } from "../boot/servei/postServei.js";
 export default {
   data() {
     return {
@@ -52,19 +51,7 @@ export default {
     }
   },
   async mounted() {
-    let blogId = await getBlogId();
-    let posts = await getPost(blogId);
-    //console.log(posts);
-    posts.map(post => {
-      console.log(post);
-      let objecteAfegir = {
-        name: post.title,
-        idiomaOriginal: post.labels[0],
-        idiomaTraduit: post.labels[1]
-      };
 
-      this.data.push(objecteAfegir);
-    });
   }
 };
 </script>
