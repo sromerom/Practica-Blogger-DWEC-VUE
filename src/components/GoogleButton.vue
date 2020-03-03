@@ -26,6 +26,9 @@ export default {
         {},
         googleUser => {
           this.$emit("done", googleUser);
+          console.log(googleUser);
+          localStorage.setItem("tokenAccess", googleUser.uc.access_token);
+          this.$router.push("/post"); 
         },
         error => console.log(error)
       );
