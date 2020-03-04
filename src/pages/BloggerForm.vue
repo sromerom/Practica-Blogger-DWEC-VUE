@@ -26,8 +26,6 @@
         ['save']
       ]"
     />
-    <p>{{titolPost}}</p>
-    <p>{{selectIdiomes}}</p>
   </div>
 </template>
 
@@ -47,7 +45,6 @@ export default {
       titolPost: "",
       descripcioPost: "",
       selectIdiomes: null,
-
       idiomes: []
     };
   },

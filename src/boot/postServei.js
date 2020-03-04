@@ -34,6 +34,23 @@ export async function getPost(blogId) {
 
 }
 
+export async function getPostById(postId) {
+  const idBlog = await getBlogId();
+  const url = `https://www.googleapis.com/blogger/v3/blogs/${idBlog}/posts/${postId}`;
+
+  let response = await axios({
+    method: "GET",
+    url: url,
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("tokenAccess")
+    }
+  });
+
+  return new Post(response.data.id, response.data.blog.id, response.data.author, response.data.published, response.data.updated, response.data.url, response.data.title, response.data.content, response.data.labels);
+
+}
+
+
 
 export async function createPost(post) {
 
