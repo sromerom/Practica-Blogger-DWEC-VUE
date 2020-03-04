@@ -66,7 +66,7 @@ export async function deletePost(idBlog, idPost) {
   const url = `https://www.googleapis.com/blogger/v3/blogs/${idBlog}/posts/${idPost}`;
 
   await axios({
-    method: "POST",
+    method: "DELETE",
     url: url,
     headers: {
       'Authorization': 'Bearer ' + localStorage.getItem("tokenAccess"),
