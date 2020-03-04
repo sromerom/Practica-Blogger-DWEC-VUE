@@ -93,11 +93,17 @@
           icon: 'update',
           label: 'Actualitza post',
           handler: updateWork
+        },
+        translate: {
+          tip: 'Traduiex el teu post',
+          icon: 'font_download',
+          label: 'Traduiex post',
+          handler: translateIt
         }
       }"
               :toolbar="[
         ['bold', 'italic', 'strike', 'underline'],
-        ['save']
+        ['save', 'translate']
       ]"
             />
             <p>{{selectIdiomes}}</p>
@@ -115,7 +121,8 @@ import {
   updatePost,
   deletePost,
   getLanguages,
-  getPostById
+  getPostById,
+  translate
 } from "../boot/postServei.js";
 export default {
   name: "BloggerList",
@@ -176,7 +183,6 @@ export default {
     async loadPosts() {
       this.blogId = await getBlogId();
       const posts = await getPost(this.blogId);
-
       posts.map(post => {
         const objecteAfegir = {
           id: post.idPost,
@@ -219,8 +225,20 @@ export default {
       console.log("Entro");
       console.log(idPost);
       const post = await getPostById(idPost);
-      this.descripcioPost = post.content;
-      this.titolPost = post.title;
+
+      const contentTraduit = await translate(
+        post.labels[1],
+        post.labels[0],
+        post.content
+      );
+      const titleTraduit = await translate(
+        post.labels[1],
+        post.labels[0],
+        post.title
+      );
+
+      this.descripcioPost = contentTraduit.data;
+      this.titolPost = titleTraduit.data;
 
       /*
       let labelIdiomaElegits = [];
@@ -244,6 +262,31 @@ export default {
           value: post.labels[1]
         }
       ];
+    },
+    async translateIt() {
+      console.log(this.selectIdiomes);
+
+      const codeIdiomaOriginal = this.selectIdiomes[0].value;
+      const codeIdiomaATraduir = this.selectIdiomes[1].value;
+      console.log(codeIdiomaOriginal, codeIdiomaATraduir);
+
+      //Traduim el titol i el content del post
+      const titolTraduit = await translate(
+        codeIdiomaOriginal,
+        codeIdiomaATraduir,
+        this.titolPost
+      );
+      const cosTraduit = await translate(
+        codeIdiomaOriginal,
+        codeIdiomaATraduir,
+        this.descripcioPost
+      );
+
+      this.titolPost = titolTraduit.data;
+      this.descripcioPost = cosTraduit.data;
+      //I actualizam
+      //tinymce.activeEditor.setContent(contentTraduit);
+      //document.querySelector("#title").value = titleTraduit;
     }
   },
   async mounted() {

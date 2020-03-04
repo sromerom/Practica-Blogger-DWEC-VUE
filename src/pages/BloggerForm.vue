@@ -15,15 +15,21 @@
       v-model="descripcioPost"
       :definitions="{
         save: {
-          tip: 'Save your work',
+          tip: 'Crea aquest post',
           icon: 'save',
           label: 'Crea post',
           handler: saveWork
+        },
+        translate: {
+          tip: 'Traduiex el teu post',
+          icon: 'font_download',
+          label: 'Traduiex post',
+          handler: translateIt
         }
       }"
       :toolbar="[
         ['bold', 'italic', 'strike', 'underline'],
-        ['save']
+        ['save', 'translate']
       ]"
     />
   </div>
@@ -75,6 +81,23 @@ export default {
           message: `S'ha creat correctament el post`
         });
       }
+    },
+    async translateIt() {
+      console.log(this.selectIdiomes);
+
+      const codeIdiomaOriginal = this.selectIdiomes[0].value;
+      const codeIdiomaATraduir = this.selectIdiomes[1].value;
+      console.log(codeIdiomaOriginal, codeIdiomaATraduir)
+
+            //Traduim el titol i el content del post
+            const titolTraduit = await translate(codeIdiomaOriginal, codeIdiomaATraduir, this.titolPost);
+            const cosTraduit = await translate(codeIdiomaOriginal, codeIdiomaATraduir, this.descripcioPost);
+
+            this.titolPost = titolTraduit.data;
+            this.descripcioPost = cosTraduit.data;
+            //I actualizam
+            //tinymce.activeEditor.setContent(contentTraduit);
+            //document.querySelector("#title").value = titleTraduit;
     }
   },
   async mounted() {
