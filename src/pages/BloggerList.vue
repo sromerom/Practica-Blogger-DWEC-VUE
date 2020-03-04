@@ -9,7 +9,7 @@
               round
               flat
               color="grey"
-              @click="dialog = true, propActual = props, editRow()"
+              @click="dialog = true, propActual = props, anemEditar()"
               icon="edit"
             ></q-btn>
             <q-btn
@@ -100,6 +100,7 @@
         ['save']
       ]"
             />
+            <p>{{selectIdiomes}}</p>
           </q-card>
         </q-dialog>
       </div>
@@ -107,10 +108,11 @@
   </q-page>
 </template>
 <script>
-
+import { Post } from "../boot/post.js";
 import {
   getBlogId,
   getPost,
+  updatePost,
   deletePost,
   getLanguages,
   getPostById
@@ -157,7 +159,7 @@ export default {
     };
   },
   methods: {
-    async editRow() {
+    async anemEditar() {
       await this.carregaPost(this.propActual.row.id);
     },
     async deleteRow() {
@@ -186,14 +188,62 @@ export default {
       });
     },
     async updateWork() {
-      
+      if (this.titolPost != "" || this.descripcioPost != "") {
+        const tagIdiomesSeleccionat = [
+          this.selectIdiomes[0].value,
+          this.selectIdiomes[1].value
+        ];
+        const post = await getPostById(this.propActual.row.id);
+        await updatePost(
+          new Post(
+            post.idPost,
+            post.idBlog,
+            post.author,
+            post.published,
+            undefined,
+            post.url,
+            this.titolPost,
+            this.descripcioPost,
+            tagIdiomesSeleccionat
+          )
+        );
+      }
+      this.data = [];
+      await this.loadPosts();
+      this.$q.notify({
+        type: "warning",
+        message: `S'ha modificat correctament el post`
+      });
     },
     async carregaPost(idPost) {
-      console.log("Entro")
-      console.log(idPost)
+      console.log("Entro");
+      console.log(idPost);
       const post = await getPostById(idPost);
       this.descripcioPost = post.content;
       this.titolPost = post.title;
+
+      /*
+      let labelIdiomaElegits = [];
+      this.idiomes.forEach(idioma => {
+        if (
+          idioma.value === post.labels[0] ||
+          idioma.value === post.labels[1]
+        ) {
+          labelIdiomaElegits.push(idioma.label);
+        }
+      });
+
+      */
+      this.selectIdiomes = [
+        {
+          label: post.labels[0],
+          value: post.labels[0]
+        },
+        {
+          label: post.labels[1],
+          value: post.labels[1]
+        }
+      ];
     }
   },
   async mounted() {

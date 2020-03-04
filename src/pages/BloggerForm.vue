@@ -71,10 +71,8 @@ export default {
         );
 
         this.$q.notify({
-          message: "Creat el post correctament",
-          color: "green-4",
-          textColor: "white",
-          icon: "cloud_done"
+          type: "positive",
+          message: `S'ha creat correctament el post`
         });
       }
     }
