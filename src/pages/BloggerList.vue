@@ -39,6 +39,7 @@
         </q-card>
       </q-dialog>
       <!-- ##### Dialog actualitzar un post#####-->
+      <!-- Components molt parescuts al bloggerForm-->
       <div class="q-pa-md q-gutter-sm">
         <q-dialog
           v-model="dialog"
@@ -88,23 +89,22 @@
             <q-editor
               v-model="descripcioPost"
               :definitions="{
-        save: {
-          tip: 'Actualitza el teu post',
-          icon: 'update',
-          label: 'Actualitza post',
-          handler: updateWork
-        },
-        translate: {
-          tip: 'Traduiex el teu post',
-          icon: 'font_download',
-          label: 'Traduiex post',
-          handler: translateIt
-        }
-      }"
+                save: {
+                  tip: 'Actualitza el teu post',
+                  icon: 'update',
+                  label: 'Actualitza post',
+                  handler: updateWork
+                },
+                translate: {
+                  tip: 'Traduiex el teu post',
+                  icon: 'font_download',
+                  label: 'Traduiex post',
+                  handler: translateIt
+                }
+              }"
               :toolbar="[
-        ['bold', 'italic', 'strike', 'underline'],
-        ['save', 'translate']
-      ]"
+                ['bold', 'italic', 'strike', 'underline'],
+                ['save', 'translate']]"
             />
             <p>{{selectIdiomes}}</p>
           </q-card>
@@ -284,9 +284,6 @@ export default {
 
       this.titolPost = titolTraduit.data;
       this.descripcioPost = cosTraduit.data;
-      //I actualizam
-      //tinymce.activeEditor.setContent(contentTraduit);
-      //document.querySelector("#title").value = titleTraduit;
     }
   },
   async mounted() {

@@ -16,7 +16,7 @@
       <q-tabs align="left">
         <q-route-tab to="/post" label="Inici" />
         <q-route-tab to="/bloggerForm" label="Crea un Post" />
-        <q-route-tab to="/page2" label="Calculadora Calories" />
+        <q-route-tab to="/calculadora" label="Calculadora Calories" />
         <q-route-tab to="/page3" label="Streaming" />
       </q-tabs>
     </q-header>

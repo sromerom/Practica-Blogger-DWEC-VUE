@@ -14,7 +14,9 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/BloggerList.vue') },
-      { path: '/bloggerForm', component: () => import('pages/BloggerForm.vue') }
+      { path: '/bloggerForm', component: () => import('pages/BloggerForm.vue') },
+      { path: '/calculadora', component: () => import('pages/CalculadoraCalories.vue') },
+
     ],
     meta: {
       requiresAuth: true
