@@ -11,23 +11,11 @@
     <section id="dragAndDrop">
       <!-- Drag and Drop-->
       <div id="opcionsDrag">
-        <div id="pocCap" v-draggable="pocCap">Calories necessàries amb poc o cap exercici</div>
-        <div
-          id="lleuger"
-          v-draggable="lleuger"
-        >Calories necessàries amb exercici lleuger (1-3 dies per setmana)</div>
-        <div
-          id="moderat"
-          v-draggable="moderat"
-        >Calories necessàries amb exercici moderat (3-5 dies per setmana)</div>
-        <div
-          id="fort"
-          v-draggable="fort"
-        >Calories necessàries amb exercici fort (6 dies per setmana)</div>
-        <div
-          id="professional"
-          v-draggable="professional"
-        >Calories necessàries amb exercici professional o extrem</div>
+        <div id="pocCap">Calories necessàries amb poc o cap exercici</div>
+        <div id="lleuger">Calories necessàries amb exercici lleuger (1-3 dies per setmana)</div>
+        <div id="moderat">Calories necessàries amb exercici moderat (3-5 dies per setmana)</div>
+        <div id="fort">Calories necessàries amb exercici fort (6 dies per setmana)</div>
+        <div id="professional">Calories necessàries amb exercici professional o extrem</div>
       </div>
 
       <div id="destiDrag">Insereix activitat!</div>
@@ -95,51 +83,18 @@
 }
 </style>
 <script>
-import { Draggable } from "draggable-vue-directive";
 export default {
   name: "PageCalculadora",
-  directives: {
-    Draggable
-  },
   data() {
     return {
       edat: "",
       altura: "",
       pes: "",
       radioSexe: "home",
-      resultat: "",
-      pocCap: {
-        onPositionChange: this.onPosChanged,
-        onDragEnd: this.onPosEnd,
-        onDragStart: this.onPosStart,
-        resetInitialPos: null
-      },
-      lleuger: "",
-      moderat: "",
-      fort: "",
-      professional: ""
+      resultat: ""
     };
   },
   methods: {
-    onPosChanged: function(positionDiff, absolutePosition, event) {
-      //console.log(positionDiff);
-      console.log(absolutePosition)
-      //console.log(absolutePosition);
-      //console.log(event);
-      //console.log("left corner", absolutePosition.left);
-      //console.log("top corner", absolutePosition.top);
-
-      console.log(event)
-      if (absolutePosition.left > 980 && absolutePosition.left < 1180 && absolutePosition.top > 60 && absolutePosition.top < 260) {
-          console.log("De dins")
-      }
-    },
-    onPosEnd: function() {
-      console.log("Acabat");
-    },
-    onPosStart: function() {
-      console.log("Comença");
-    },
     calculaCalories: function() {
       if (this.radioSexe === "home") {
         this.resultat = 10 * this.pes + 6.25 * this.altura - 5 * this.edat + 5;
@@ -149,7 +104,6 @@ export default {
       }
     }
   },
-  mounted() {
-  }
+  mounted() {}
 };
 </script>
