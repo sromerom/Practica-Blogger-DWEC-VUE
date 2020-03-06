@@ -252,6 +252,7 @@ export default {
       });
 
       */
+     console.log(post)
       this.selectIdiomes = [
         {
           label: post.labels[0],

@@ -9,23 +9,21 @@
     <p>{{resultat}}</p>
 
     <!-- 
-        -label input select
-        -cors a axios.js
-        -part publica i part privada
+        -label input select -> tornar a cridar languages
+        -cors a axios.js -> No posar
+        -part publica i part privada -> Crear un part publica semblant a la de blogger
         -forma d'actualitzar la taula
-        -servei en boot
+        -servei en boot -> Canviar a methods de cada page
 
 
     <section id="dragAndDrop">
       Drag and Drop
       <div id="opcionsDrag">
-        <draggable v-model="divs" group="people" @start="drag=true" @end="drag=false">
           <div id="pocCap" :key="pocCap">Calories necessàries amb poc o cap exercici</div>
           <div id="lleuger" :key="lleuger">Calories necessàries amb exercici lleuger (1-3 dies per setmana)</div>
           <div id="moderat" :key="moderat">Calories necessàries amb exercici moderat (3-5 dies per setmana)</div>
           <div id="fort" :key="fort">Calories necessàries amb exercici fort (6 dies per setmana)</div>
           <div id="professional" :key="professional">Calories necessàries amb exercici professional o extrem</div>
-        </draggable>
       </div>
      
 
@@ -33,41 +31,89 @@
       <input type="hidden" id="activitat" name="activitat" value="default" />
     </section>
     -->
-     <div class="col-md-3">
-      <draggable class="list-group" tag="div" v-model="list" v-bind="dragOptions" :move="onMove" @start="isDragging=true" @end="isDragging=false">
+    <div class="col-md-3">
+      <draggable
+        id="opcionsDrag"
+        class="list-group"
+        tag="div"
+        v-model="list"
+        v-bind="dragOptions"
+        :move="onMove"
+        @start="isDragging=true"
+        @end="isDragging=false"
+      >
         <transition-group type="transition" :name="'flip-list'">
-          <p class="list-group-item" v-for="element in list" :key="element.order">
+          <div
+            :id="element.id"
+            :data-exercici="element.num"
+            class="list-group-item"
+            v-for="element in list"
+            :key="element.order"
+          >
             {{element.name}}
             <span class="badge">{{element.order}}</span>
-          </p>
+          </div>
         </transition-group>
       </draggable>
     </div>
 
     <div class="pp col-md-3">
-      <draggable element="span" v-model="list2" v-bind="dragOptions" :move="onMove">
-        <transition-group name="no" class="list-group" tag="ul">
-          <p class="list-group-item" v-for="element in list2" :key="element.order">
+      <draggable v-model="list2" v-bind="dragOptions" :move="onMove">
+        <transition-group id="destiDrag" name="no" class="list-group" tag="div">
+          <div
+            v-bind:id="element.id"
+            class="list-group-item"
+            v-for="element in list2"
+            :key="element.order"
+          >
             {{element.name}}
             <span class="badge">{{element.order}}</span>
-          </p>
+          </div>
         </transition-group>
       </draggable>
     </div>
+    <div>
+      <h2>Fes la teva dieta!</h2>
+      <q-media-player type="video" :sources="sources" />
+      <div id="reconeixement"></div>
+      <button id="calculaDieta">CalculaDieta</button>
+      <button id="elimina">Torna a crear dieta</button>
+    </div>
+    {{sources}}
   </q-page>
 </template>
 
 <script>
 import draggable from "vuedraggable";
-const message = [
-  "vue.draggable",
-  "draggable",
-  "component",
-  "for",
-  "vue.js 2.0",
-  "based",
-  "on",
-  "Sortablejs"
+import md5 from "ml5";
+import p5 from "vue-p5";
+
+const noms = [
+  {
+    id: "pocCap",
+    nom: "Calories necessàries amb poc o cap exercici",
+    num: 1.2
+  },
+  {
+    id: "lleuger",
+    nom: "Calories necessàries amb exercici lleuger (1-3 dies per setmana)",
+    num: 1.375
+  },
+  {
+    id: "moderat",
+    nom: "Calories necessàries amb exercici moderat (3-5 dies per setmana)",
+    num: 1.55
+  },
+  {
+    id: "fort",
+    nom: "Calories necessàries amb exercici fort (6 dies per setmana)",
+    num: 1.725
+  },
+  {
+    id: "professional",
+    nom: "Calories necessàries amb exercici professional o extrem",
+    num: 1.9
+  }
 ];
 export default {
   name: "PageCalculadora",
@@ -81,23 +127,42 @@ export default {
       pes: "",
       radioSexe: "home",
       resultat: "",
-      list: message.map((name, index) => {
-        return { name, order: index + 1, fixed: false };
+      list: noms.map((name, index) => {
+        return {
+          id: name.id,
+          name: name.nom,
+          num: name.num,
+          order: index + 1,
+          fixed: false
+        };
       }),
       list2: [],
       editable: true,
       isDragging: false,
-      delayedDragging: false
+      delayedDragging: false,
+      sources: [
+        {
+          src: "",
+          type: "video/mp4"
+        }
+      ]
     };
   },
   methods: {
     calculaCalories: function() {
+      let tmb;
+      console.log(this.pes, this.altura, this.edat);
       if (this.radioSexe === "home") {
-        this.resultat = 10 * this.pes + 6.25 * this.altura - 5 * this.edat + 5;
+        tmb = 10 * this.pes + 6.25 * this.altura - 5 * this.edat + 5;
       } else {
-        this.resultat =
-          10 * this.pes + 6.25 * this.altura - 5 * this.edat - 161;
+        tmb = 10 * this.pes + 6.25 * this.altura - 5 * this.edat - 161;
       }
+
+      console.log(tmb);
+      console.log(this.list2[0].num);
+      console.log(parseInt(tmb) * parseInt(this.list2[0].num));
+      this.resultat = tmb * this.list2[0].num;
+      tmb = 0;
     },
     orderList() {
       this.list = this.list.sort((one, two) => {
@@ -120,53 +185,41 @@ export default {
         disabled: !this.editable,
         ghostClass: "ghost"
       };
-    },
-    listString() {
-      return JSON.stringify(this.list, null, 2);
-    },
-    list2String() {
-      return JSON.stringify(this.list2, null, 2);
     }
   },
   watch: {
     isDragging(newValue) {
-      if (newValue) {
-        this.delayedDragging = true;
-        return;
-      }
       this.$nextTick(() => {
         this.delayedDragging = false;
       });
     }
+  },
+  created() {
+    let classifier;
+    let resultsP;
+    let video;
+
+    //Cream l'objecte constraint que fara servir API de la camara, mediaDevices
+    const constraints = (window.constraints = {
+      audio: false,
+      video: {
+        width: { min: 640 },
+        height: { min: 480 }
+      }
+    });
+    
+    // Create a camera input
+    //video = document.querySelector("#videoo");
+    //console.log(video);
+    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+      window.stream = stream; // make variable available to browser console
+      //this.sources.src = stream;
+    });
   }
 };
 </script>
 
-<style>
-.pp {
-    background-color: red;
-}
-.flip-list-move {
-  transition: transform 0.5s;
-}
-.no-move {
-  transition: transform 0s;
-}
-.ghost {
-  opacity: 0.5;
-  background: #c8ebfb;
-}
-.list-group {
-  min-height: 20px;
-}
-.list-group-item {
-  cursor: move;
-}
-.list-group-item i {
-  cursor: pointer;
-}
-</style>
-<!--
+
 <style lang="stylus" scoped>
 #dragAndDrop {
   display: flex;
@@ -196,8 +249,8 @@ export default {
 }
 
 #opcionsDrag div {
-  width: 100px;
-  height: 200px;
+  width: 500px;
+  height: 50px;
   border: 2px solid black;
   margin: 10px;
   padding-left: 10px;
@@ -225,4 +278,3 @@ export default {
   background-color: green;
 }
 </style>
--->
