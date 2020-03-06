@@ -8,22 +8,165 @@
     <q-btn @click="calculaCalories" color="white" text-color="black" label="Calcula" />
     <p>{{resultat}}</p>
 
+    <!-- 
+        -label input select
+        -cors a axios.js
+        -part publica i part privada
+        -forma d'actualitzar la taula
+        -servei en boot
+
+
     <section id="dragAndDrop">
-      <!-- Drag and Drop-->
+      Drag and Drop
       <div id="opcionsDrag">
-        <div id="pocCap">Calories necessàries amb poc o cap exercici</div>
-        <div id="lleuger">Calories necessàries amb exercici lleuger (1-3 dies per setmana)</div>
-        <div id="moderat">Calories necessàries amb exercici moderat (3-5 dies per setmana)</div>
-        <div id="fort">Calories necessàries amb exercici fort (6 dies per setmana)</div>
-        <div id="professional">Calories necessàries amb exercici professional o extrem</div>
+        <draggable v-model="divs" group="people" @start="drag=true" @end="drag=false">
+          <div id="pocCap" :key="pocCap">Calories necessàries amb poc o cap exercici</div>
+          <div id="lleuger" :key="lleuger">Calories necessàries amb exercici lleuger (1-3 dies per setmana)</div>
+          <div id="moderat" :key="moderat">Calories necessàries amb exercici moderat (3-5 dies per setmana)</div>
+          <div id="fort" :key="fort">Calories necessàries amb exercici fort (6 dies per setmana)</div>
+          <div id="professional" :key="professional">Calories necessàries amb exercici professional o extrem</div>
+        </draggable>
       </div>
+     
 
       <div id="destiDrag">Insereix activitat!</div>
       <input type="hidden" id="activitat" name="activitat" value="default" />
     </section>
+    -->
+     <div class="col-md-3">
+      <draggable class="list-group" tag="div" v-model="list" v-bind="dragOptions" :move="onMove" @start="isDragging=true" @end="isDragging=false">
+        <transition-group type="transition" :name="'flip-list'">
+          <p class="list-group-item" v-for="element in list" :key="element.order">
+            {{element.name}}
+            <span class="badge">{{element.order}}</span>
+          </p>
+        </transition-group>
+      </draggable>
+    </div>
+
+    <div class="pp col-md-3">
+      <draggable element="span" v-model="list2" v-bind="dragOptions" :move="onMove">
+        <transition-group name="no" class="list-group" tag="ul">
+          <p class="list-group-item" v-for="element in list2" :key="element.order">
+            {{element.name}}
+            <span class="badge">{{element.order}}</span>
+          </p>
+        </transition-group>
+      </draggable>
+    </div>
   </q-page>
 </template>
 
+<script>
+import draggable from "vuedraggable";
+const message = [
+  "vue.draggable",
+  "draggable",
+  "component",
+  "for",
+  "vue.js 2.0",
+  "based",
+  "on",
+  "Sortablejs"
+];
+export default {
+  name: "PageCalculadora",
+  components: {
+    draggable
+  },
+  data() {
+    return {
+      edat: "",
+      altura: "",
+      pes: "",
+      radioSexe: "home",
+      resultat: "",
+      list: message.map((name, index) => {
+        return { name, order: index + 1, fixed: false };
+      }),
+      list2: [],
+      editable: true,
+      isDragging: false,
+      delayedDragging: false
+    };
+  },
+  methods: {
+    calculaCalories: function() {
+      if (this.radioSexe === "home") {
+        this.resultat = 10 * this.pes + 6.25 * this.altura - 5 * this.edat + 5;
+      } else {
+        this.resultat =
+          10 * this.pes + 6.25 * this.altura - 5 * this.edat - 161;
+      }
+    },
+    orderList() {
+      this.list = this.list.sort((one, two) => {
+        return one.order - two.order;
+      });
+    },
+    onMove({ relatedContext, draggedContext }) {
+      const relatedElement = relatedContext.element;
+      const draggedElement = draggedContext.element;
+      return (
+        (!relatedElement || !relatedElement.fixed) && !draggedElement.fixed
+      );
+    }
+  },
+  computed: {
+    dragOptions() {
+      return {
+        animation: 0,
+        group: "description",
+        disabled: !this.editable,
+        ghostClass: "ghost"
+      };
+    },
+    listString() {
+      return JSON.stringify(this.list, null, 2);
+    },
+    list2String() {
+      return JSON.stringify(this.list2, null, 2);
+    }
+  },
+  watch: {
+    isDragging(newValue) {
+      if (newValue) {
+        this.delayedDragging = true;
+        return;
+      }
+      this.$nextTick(() => {
+        this.delayedDragging = false;
+      });
+    }
+  }
+};
+</script>
+
+<style>
+.pp {
+    background-color: red;
+}
+.flip-list-move {
+  transition: transform 0.5s;
+}
+.no-move {
+  transition: transform 0s;
+}
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
+.list-group {
+  min-height: 20px;
+}
+.list-group-item {
+  cursor: move;
+}
+.list-group-item i {
+  cursor: pointer;
+}
+</style>
+<!--
 <style lang="stylus" scoped>
 #dragAndDrop {
   display: flex;
@@ -82,28 +225,4 @@
   background-color: green;
 }
 </style>
-<script>
-export default {
-  name: "PageCalculadora",
-  data() {
-    return {
-      edat: "",
-      altura: "",
-      pes: "",
-      radioSexe: "home",
-      resultat: ""
-    };
-  },
-  methods: {
-    calculaCalories: function() {
-      if (this.radioSexe === "home") {
-        this.resultat = 10 * this.pes + 6.25 * this.altura - 5 * this.edat + 5;
-      } else {
-        this.resultat =
-          10 * this.pes + 6.25 * this.altura - 5 * this.edat - 161;
-      }
-    }
-  },
-  mounted() {}
-};
-</script>
+-->
