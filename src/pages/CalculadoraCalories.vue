@@ -72,20 +72,29 @@
         </transition-group>
       </draggable>
     </div>
-    <div>
-      <h2>Fes la teva dieta!</h2>
-      <q-media-player type="video" :sources="sources" />
-      <div id="reconeixement"></div>
-      <button id="calculaDieta">CalculaDieta</button>
-      <button id="elimina">Torna a crear dieta</button>
-    </div>
-    {{sources}}
+
+    <section id="flexDieta">
+      <div>
+        <h2>Fes la teva dieta!</h2>
+        <video ref="camera" :width="640" :height="480" autoplay></video>
+        <div id="reconeixement">
+          <p>Label: {{ml5Results.label}}</p>
+          <p>Confidende: {{ml5Results.confidence}}</p>
+        </div>
+        <q-btn id="calculaDieta" color="white" text-color="black" label="CalculaDieta" />
+        <q-btn id="elimina" color="primary" label="Torna a crear dieta" />
+      </div>
+      <div id="totIngredients">
+        <h2>Ingredients de la teva actual dieta:</h2>
+        <p>{{llistatAliments}}</p>
+      </div>
+    </section>
   </q-page>
 </template>
 
 <script>
 import draggable from "vuedraggable";
-import md5 from "ml5";
+import ml5 from "ml5";
 import p5 from "vue-p5";
 
 const noms = [
@@ -140,12 +149,12 @@ export default {
       editable: true,
       isDragging: false,
       delayedDragging: false,
-      sources: [
-        {
-          src: "",
-          type: "video/mp4"
-        }
-      ]
+      ml5Results: {
+        label: "",
+        confidence: ""
+      },
+      classifier: null,
+      llistatAliments: []
     };
   },
   methods: {
@@ -175,6 +184,95 @@ export default {
       return (
         (!relatedElement || !relatedElement.fixed) && !draggedElement.fixed
       );
+    },
+    createCameraElement() {
+      const constraints = (window.constraints = {
+        audio: false,
+        video: {
+          width: { min: 640 },
+          height: { min: 480 }
+        }
+      });
+
+      navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then(stream => {
+          this.$refs.camera.srcObject = stream;
+        })
+        .catch(error => {
+          alert("May the browser didn't support or there is some errors.");
+        });
+    },
+    setupML5() {
+      this.classifier = ml5.imageClassifier(
+        "MobileNet",
+        this.$refs.camera,
+        this.modelReady
+      );
+    },
+    modelReady() {
+      console.log("Model Ready");
+      this.classifyVideo();
+    },
+    classifyVideo() {
+      this.classifier.classify(this.gotResult);
+    },
+    gotResult(err, results) {
+      this.ml5Results.label = results[0].label;
+      this.ml5Results.confidence = results[0].confidence;
+      //results[0].label + " " + nf(results[0].confidence, 0, 2);
+      //Si la confiança es major al 0.70, començarem el proces d'introducció a la base de dades
+      /*
+      if (results[0].confidence >= 0.7) {
+        addData(results[0].label);
+      }
+      */
+      this.classifyVideo();
+    },
+    calculaDieta() {},
+    eliminaDieta() {},
+    addData(alimentNou) {
+      const db = request.result;
+
+      const transaction = db.transaction("aliment", "readwrite");
+      const objectStore = transaction.objectStore("aliment");
+
+      //Abans d'afegir el nou aliment, s'ha de veure si l'aliment es troba en la bbdd o no
+      const aliments = objectStore.getAll();
+
+      aliments.onsuccess = function(e) {
+        const totsAliments = aliments.result;
+        let existeix = false;
+
+        totsAliments.map(aliment => {
+          //return aliment.nom === alimentNou;
+          if (aliment.nom === alimentNou) {
+            existeix = true;
+          }
+        });
+
+        //Si no existeix, es comença a introduir l'aliment a la base de dades
+        if (!existeix) {
+          const transaction = db.transaction("aliment", "readwrite");
+          const objectStore = transaction.objectStore("aliment");
+
+          const newAliment = {
+            nom: alimentNou
+          };
+          objectStore.add(newAliment);
+          this.llistatAliments.push(alimentNou);
+        }
+      };
+    },
+    async getCalories(nameIngr) {
+      const app_id = "32f2df88";
+      const app_key = "53d0545fb61ad0cc3a9ea0af076a5e05";
+
+      const request = await fetch(
+        `https://api.edamam.com/api/food-database/parser?app_id=${app_id}&app_key=${app_key}&ingr=${nameIngr}`
+      );
+      const ingredients = await request.json();
+      return ingredients;
     }
   },
   computed: {
@@ -194,27 +292,9 @@ export default {
       });
     }
   },
-  created() {
-    let classifier;
-    let resultsP;
-    let video;
-
-    //Cream l'objecte constraint que fara servir API de la camara, mediaDevices
-    const constraints = (window.constraints = {
-      audio: false,
-      video: {
-        width: { min: 640 },
-        height: { min: 480 }
-      }
-    });
-    
-    // Create a camera input
-    //video = document.querySelector("#videoo");
-    //console.log(video);
-    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
-      window.stream = stream; // make variable available to browser console
-      //this.sources.src = stream;
-    });
+  mounted() {
+    this.createCameraElement();
+    this.setupML5();
   }
 };
 </script>
