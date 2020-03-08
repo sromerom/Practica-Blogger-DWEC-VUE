@@ -159,6 +159,8 @@ export default {
       } else {
         tmb = 10 * this.pes + 6.25 * this.altura - 5 * this.edat - 161;
       }
+
+      this.caloriesNecesaries = tmb * this.insereixActivitat[0].num;
     },
     onMove({ relatedContext, draggedContext }) {
       const relatedElement = relatedContext.element;
@@ -310,7 +312,6 @@ export default {
       let arrayCalories = await Promise.all(arrayPromeses);
 
       arrayCalories.map(caloria => {
-        console.log(caloria);
         sumaCal = sumaCal + caloria.data.hints[0].food.nutrients.ENERC_KCAL;
       });
 

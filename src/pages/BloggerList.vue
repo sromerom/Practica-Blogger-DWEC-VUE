@@ -93,12 +93,23 @@
               filled
               v-model="selectIdiomes"
               multiple
+              use-input
+              input-debounce="0"
+              label="Idiomes"
               :options="idiomes"
               counter
               max-values="2"
-              hint="Max 2 selections"
+              hint="Idioma original, idioma a traduir"
+              @filter="filterSelect"
               style="width: 250px"
-            />
+              behavior="menu"
+            >
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-grey">No results</q-item-section>
+                </q-item>
+              </template>
+            </q-select>
             <q-editor
               v-model="descripcioPost"
               :definitions="{
@@ -155,6 +166,7 @@ export default {
       descripcioPost: "",
       selectIdiomes: null,
       idiomes: [],
+      idiomesFilter: [],
       columns: [
         {
           name: "name",
@@ -187,6 +199,22 @@ export default {
     };
   },
   methods: {
+    filterSelect(val, update) {
+      if (val === "") {
+        update(() => {
+          this.idiomes = this.idiomesFilter;
+        });
+        return;
+      }
+
+      update(() => {
+        const needle = val.toLowerCase();
+        this.idiomes = this.idiomesFilter.filter(idioma => {
+          const label = idioma.label.toLowerCase();
+          return label.indexOf(needle) > -1;
+        });
+      });
+    },
     async anemEditar() {
       await this.carregaPost(this.propActual.row.id);
       await this.createCameraElement();
@@ -359,7 +387,6 @@ export default {
         },
         data: formData
       });
-
 
       return response.data;
     },
@@ -551,6 +578,7 @@ export default {
       };
       this.idiomes.push(obj);
     });
+    this.idiomesFilter = this.idiomes;
   }
 };
 </script>
