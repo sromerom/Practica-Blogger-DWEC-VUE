@@ -165,11 +165,11 @@ export default {
       return response;
     },
     async saveWork() {
-      const tagIdiomesSeleccionat = [
-        this.selectIdiomes[0].value,
-        this.selectIdiomes[1].value
-      ];
-      if (this.titolPost != "" || this.descripcioPost != "") {
+      if (this.titolPost != "" && this.descripcioPost != "") {
+        const tagIdiomesSeleccionat = [
+          this.selectIdiomes[0].value,
+          this.selectIdiomes[1].value
+        ];
         await this.createPost(
           new Post(
             undefined,

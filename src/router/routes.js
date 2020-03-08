@@ -10,7 +10,7 @@ const routes = [
     }
   },
   {
-    path: '/post',
+    path: '/private',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/BloggerList.vue') },
@@ -20,6 +20,16 @@ const routes = [
     ],
     meta: {
       requiresAuth: true
+    }
+  },
+  {
+    path: '/public',
+    component: () => import('layouts/PublicLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/Public.vue') },
+    ],
+    meta: {
+      requiresAuth: false
     }
   }
 ];

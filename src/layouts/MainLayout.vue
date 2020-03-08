@@ -4,13 +4,12 @@
       <q-toolbar>
         <q-toolbar-title>
           <q-avatar>
-            <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg" />
-          </q-avatar>Title
+          </q-avatar>sromeromi18n
         </q-toolbar-title>
       </q-toolbar>
 
       <q-tabs align="left">
-        <q-route-tab to="/post" label="Inici" />
+        <q-route-tab to="/private" label="Inici" />
         <q-route-tab to="/bloggerForm" label="Crea un Post" />
         <q-route-tab to="/calculadora" label="Calculadora Calories" />
       </q-tabs>
@@ -24,8 +23,7 @@
       <q-toolbar>
         <q-toolbar-title>
           <q-avatar>
-            <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg" />
-          </q-avatar>Title
+          </q-avatar>Samuel Romero Marín &copy;
         </q-toolbar-title>
       </q-toolbar>
     </q-footer>

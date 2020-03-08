@@ -46,7 +46,7 @@
           </draggable>
         </div>
       </div>
-      <q-btn @click="calculaCalories" color="white" text-color="black" label="Calcula" />
+      <q-btn @click="calculaCalories" color="primary" text-color="black" label="Calcula" />
     </div>
     <section id="resultats">
       <div>
@@ -64,7 +64,7 @@
         <video ref="camera" :width="640" :height="480" autoplay></video>
         <div id="reconeixement">
           <p>Label: {{ml5Results.label}}</p>
-          <p>Confidende: {{ml5Results.confidence}}</p>
+          <p>Confidence: {{ml5Results.confidence}}</p>
         </div>
         <q-btn
           id="calculaDieta"
@@ -183,9 +183,6 @@ export default {
         .then(stream => {
           this.$refs.camera.srcObject = stream;
         })
-        .catch(error => {
-          alert("May the browser didn't support or there is some errors.");
-        });
     },
     setupML5() {
       this.classifier = ml5.imageClassifier(

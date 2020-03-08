@@ -11,12 +11,12 @@ export default async ({ Vue, router }) => {
             //axios.defaults.withCredentials = true;
             axios.defaults.headers.common["Authorization"] = 'Bearer' + localStorage.getItem('tokenAccess');
 
-            console.log("Entra interceptor request");
+            //console.log("Entra interceptor request");
             return config;
         },
         function (error) {
             // Do something with request error
-            console.log("Entra interceptor request error");
+            //console.log("Entra interceptor request error");
             return Promise.reject(error);
         }
     );
@@ -26,13 +26,13 @@ export default async ({ Vue, router }) => {
         function (response) {
             // Any status code that lie within the range of 2xx cause this function to trigger
             // Do something with response data
-            console.log("Entra interceptor response");
+            //console.log("Entra interceptor response");
             return response;
         },
         function (error) {
             // Any status codes that falls outside the range of 2xx cause this function to trigger
             // Do something with response error
-            console.log("Entra interceptor response error");
+            //console.log("Entra interceptor response error");
 
             //beforeeach en index.js router
             router.push("/");

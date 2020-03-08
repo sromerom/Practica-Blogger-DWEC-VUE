@@ -62,7 +62,8 @@
           transition-hide="slide-down"
         >
           <q-card class>
-            <q-bar>
+            <q-bar dense class="bg-teal text-white">
+              >
               <q-space />
 
               <q-btn
@@ -244,7 +245,7 @@ export default {
       });
     },
     async updateWork() {
-      if (this.titolPost != "" || this.descripcioPost != "") {
+      if (this.titolPost != "" && this.descripcioPost != "") {
         const tagIdiomesSeleccionat = [
           this.selectIdiomes[0].value,
           this.selectIdiomes[1].value
@@ -293,25 +294,27 @@ export default {
       this.descripcioPost = contentTraduit.data;
       this.titolPost = titleTraduit.data;
 
-      /*
       let labelIdiomaElegits = [];
+
       this.idiomes.forEach(idioma => {
-        if (
-          idioma.value === post.labels[0] ||
-          idioma.value === post.labels[1]
-        ) {
+        if (idioma.value === post.labels[0]) {
           labelIdiomaElegits.push(idioma.label);
         }
       });
 
-      */
+      this.idiomes.forEach(idioma => {
+        if (idioma.value === post.labels[1]) {
+          labelIdiomaElegits.push(idioma.label);
+        }
+      });
+
       this.selectIdiomes = [
         {
-          label: post.labels[0],
+          label: labelIdiomaElegits[0],
           value: post.labels[0]
         },
         {
-          label: post.labels[1],
+          label: labelIdiomaElegits[1],
           value: post.labels[1]
         }
       ];
