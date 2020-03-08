@@ -1,79 +1,73 @@
 <template>
-  <q-page class="flex flex-center">
-    <q-input v-model.number="edat" type="number" filled style="max-width: 200px" />
-    <q-input v-model.number="altura" type="number" filled style="max-width: 200px" />
-    <q-input v-model.number="pes" type="number" filled style="max-width: 200px" />
-    <q-radio v-model="radioSexe" val="home" label="Home" />
-    <q-radio v-model="radioSexe" val="dona" label="Dona" />
-    <q-btn @click="calculaCalories" color="white" text-color="black" label="Calcula" />
-    <p>{{resultat}}</p>
+  <q-page>
+    <div class="column">
+      <q-input v-model.number="edat" type="number" filled style="max-width: 500px" label="Edat" />
+      <q-input
+        v-model.number="altura"
+        type="number"
+        filled
+        style="max-width: 500px"
+        label="Altura(cm)"
+      />
+      <q-input v-model.number="pes" type="number" filled style="max-width: 500px" label="Pes(kg)" />
+      <q-radio v-model="radioSexe" val="home" label="Home" />
+      <q-radio v-model="radioSexe" val="dona" label="Dona" />
+      <div class="row">
+        <div class="col-6">
+          <draggable
+            id="opcionsDrag"
+            class="list-group"
+            tag="div"
+            v-model="list"
+            v-bind="dragOptions"
+            :move="onMove"
+            @start="isDragging=true"
+            @end="isDragging=false"
+          >
+            <transition-group type="transition" :name="'flip-list'">
+              <div
+                :id="element.id"
+                :data-exercici="element.num"
+                class="list-group-item"
+                v-for="element in list"
+                :key="element.order"
+              >
+                {{element.name}}
+                <span class="badge">{{element.order}}</span>
+              </div>
+            </transition-group>
+          </draggable>
+        </div>
 
-    <!-- 
-        -label input select -> tornar a cridar languages
-        -cors a axios.js -> No posar
-        -part publica i part privada -> Crear un part publica semblant a la de blogger
-        -forma d'actualitzar la taula
-        -servei en boot -> Canviar a methods de cada page
-
-
-    <section id="dragAndDrop">
-      Drag and Drop
-      <div id="opcionsDrag">
-          <div id="pocCap" :key="pocCap">Calories necessàries amb poc o cap exercici</div>
-          <div id="lleuger" :key="lleuger">Calories necessàries amb exercici lleuger (1-3 dies per setmana)</div>
-          <div id="moderat" :key="moderat">Calories necessàries amb exercici moderat (3-5 dies per setmana)</div>
-          <div id="fort" :key="fort">Calories necessàries amb exercici fort (6 dies per setmana)</div>
-          <div id="professional" :key="professional">Calories necessàries amb exercici professional o extrem</div>
+        <div class="col-6">
+          <draggable v-model="list2" v-bind="dragOptions" :move="onMove">
+            <transition-group id="destiDrag" name="no" class="list-group" tag="div">
+              <div
+                v-bind:id="element.id"
+                class="list-group-item"
+                v-for="element in list2"
+                :key="element.order"
+              >
+                {{element.name}}
+                <span class="badge">{{element.order}}</span>
+              </div>
+            </transition-group>
+          </draggable>
+        </div>
       </div>
-     
-
-      <div id="destiDrag">Insereix activitat!</div>
-      <input type="hidden" id="activitat" name="activitat" value="default" />
+      <q-btn @click="calculaCalories" color="white" text-color="black" label="Calcula" />
+    </div>
+    <section id="resultats">
+      <div>
+        <h3>Calories necessàries diarament:</h3>
+        <p id="resultat">{{caloriesNecesaries}}</p>
+      </div>
+      <div>
+        <h3>Calories de la teva dieta introduida:</h3>
+        <p id="dieta">{{caloriesDieta}}</p>
+      </div>
     </section>
-    -->
-    <div class="col-md-3">
-      <draggable
-        id="opcionsDrag"
-        class="list-group"
-        tag="div"
-        v-model="list"
-        v-bind="dragOptions"
-        :move="onMove"
-        @start="isDragging=true"
-        @end="isDragging=false"
-      >
-        <transition-group type="transition" :name="'flip-list'">
-          <div
-            :id="element.id"
-            :data-exercici="element.num"
-            class="list-group-item"
-            v-for="element in list"
-            :key="element.order"
-          >
-            {{element.name}}
-            <span class="badge">{{element.order}}</span>
-          </div>
-        </transition-group>
-      </draggable>
-    </div>
-
-    <div class="pp col-md-3">
-      <draggable v-model="list2" v-bind="dragOptions" :move="onMove">
-        <transition-group id="destiDrag" name="no" class="list-group" tag="div">
-          <div
-            v-bind:id="element.id"
-            class="list-group-item"
-            v-for="element in list2"
-            :key="element.order"
-          >
-            {{element.name}}
-            <span class="badge">{{element.order}}</span>
-          </div>
-        </transition-group>
-      </draggable>
-    </div>
-
-    <section id="flexDieta">
+    <div class="row">
       <div>
         <h2>Fes la teva dieta!</h2>
         <video ref="camera" :width="640" :height="480" autoplay></video>
@@ -81,14 +75,20 @@
           <p>Label: {{ml5Results.label}}</p>
           <p>Confidende: {{ml5Results.confidence}}</p>
         </div>
-        <q-btn id="calculaDieta" color="white" text-color="black" label="CalculaDieta" />
-        <q-btn id="elimina" color="primary" label="Torna a crear dieta" />
+        <q-btn
+          id="calculaDieta"
+          @click="calculaDieta"
+          color="white"
+          text-color="black"
+          label="CalculaDieta"
+        />
+        <q-btn id="elimina" @click="eliminaDieta" color="primary" label="Torna a crear dieta" />
       </div>
       <div id="totIngredients">
         <h2>Ingredients de la teva actual dieta:</h2>
-        <p>{{llistatAliments}}</p>
+        <p v-for="aliment in llistatAliments" :key="aliment">{{aliment}}</p>
       </div>
-    </section>
+    </div>
   </q-page>
 </template>
 
@@ -96,7 +96,6 @@
 import draggable from "vuedraggable";
 import ml5 from "ml5";
 import p5 from "vue-p5";
-
 const noms = [
   {
     id: "pocCap",
@@ -135,7 +134,9 @@ export default {
       altura: "",
       pes: "",
       radioSexe: "home",
-      resultat: "",
+      caloriesNecesaries: "",
+      caloriesDieta: "",
+      request: "",
       list: noms.map((name, index) => {
         return {
           id: name.id,
@@ -170,7 +171,7 @@ export default {
       console.log(tmb);
       console.log(this.list2[0].num);
       console.log(parseInt(tmb) * parseInt(this.list2[0].num));
-      this.resultat = tmb * this.list2[0].num;
+      this.caloriesNecesaries = tmb * this.list2[0].num;
       tmb = 0;
     },
     orderList() {
@@ -222,17 +223,28 @@ export default {
       this.ml5Results.confidence = results[0].confidence;
       //results[0].label + " " + nf(results[0].confidence, 0, 2);
       //Si la confiança es major al 0.70, començarem el proces d'introducció a la base de dades
-      /*
-      if (results[0].confidence >= 0.7) {
-        addData(results[0].label);
+
+      if (results[0].confidence > 0.7) {
+        this.addData(results[0].label);
       }
-      */
+
       this.classifyVideo();
     },
-    calculaDieta() {},
-    eliminaDieta() {},
+    async calculaDieta() {
+      let aliments = await this.getData();
+      this.caloriesDieta = await this.getCalories(aliments);
+    },
+    eliminaDieta() {
+      const req = indexedDB.deleteDatabase("Aliments");
+      this.llistatAliments = [];
+      this.$q.notify({
+        type: "negative",
+        message: `La dieta s'ha eliminat correctament`
+      });
+    },
     addData(alimentNou) {
-      const db = request.result;
+      console.log(alimentNou);
+      const db = this.request.result;
 
       const transaction = db.transaction("aliment", "readwrite");
       const objectStore = transaction.objectStore("aliment");
@@ -260,19 +272,66 @@ export default {
             nom: alimentNou
           };
           objectStore.add(newAliment);
-          this.llistatAliments.push(alimentNou);
         }
       };
     },
-    async getCalories(nameIngr) {
+    getData() {
+      return new Promise(function(resolve, reject) {
+        var open = window.indexedDB.open("Aliments", 1);
+        open.onsuccess = function() {
+          var db = open.result;
+          var transaction = db.transaction("aliment", "readwrite");
+          var store = transaction.objectStore("aliment");
+          var request = store.getAll();
+          request.onsuccess = function(event) {
+            resolve(event.target.result);
+          };
+
+          request.onerror = function(event) {
+            reject(event);
+          };
+
+          // Close the db when the transaction is done
+          transaction.oncomplete = function() {
+            db.close();
+          };
+          transaction.onerror = function(event) {
+            reject(event);
+          };
+        };
+        open.onerror = function(event) {
+          reject(event);
+        };
+      });
+    },
+    loadData(aliments) {
+      aliments.map(aliment => {
+        this.llistatAliments.push(aliment.nom);
+      });
+    },
+    async getCalories(aliments) {
       const app_id = "32f2df88";
       const app_key = "53d0545fb61ad0cc3a9ea0af076a5e05";
+      let arrayPromeses = [];
 
-      const request = await fetch(
-        `https://api.edamam.com/api/food-database/parser?app_id=${app_id}&app_key=${app_key}&ingr=${nameIngr}`
-      );
-      const ingredients = await request.json();
-      return ingredients;
+      aliments.forEach(async function(nameIngr) {
+        let alimentt = fetch(
+          `https://api.edamam.com/api/food-database/parser?app_id=${app_id}&app_key=${app_key}&ingr=${nameIngr.nom}`
+        ).then(function(resposta) {
+          return resposta.json();
+        });
+
+        arrayPromeses.push(alimentt);
+      });
+
+      let sumaCal = 0;
+      let arrayCalories = await Promise.all(arrayPromeses);
+
+      arrayCalories.map(caloria => {
+        sumaCal = sumaCal + caloria.hints[0].food.nutrients.ENERC_KCAL;
+      });
+
+      return sumaCal;
     }
   },
   computed: {
@@ -295,6 +354,16 @@ export default {
   mounted() {
     this.createCameraElement();
     this.setupML5();
+    this.request = window.indexedDB.open("Aliments", 1);
+
+    this.request.onupgradeneeded = async function(event) {
+      const db = event.target.result;
+      let objectStore = db.createObjectStore("aliment", {
+        autoIncrement: true
+      });
+    };
+
+    this.getData().then(this.loadData);
   }
 };
 </script>
@@ -356,5 +425,19 @@ export default {
 
 #professional {
   background-color: green;
+}
+
+#resultats {
+  width: 100%;
+}
+
+#resultats h3 {
+  font-size: 1em;
+}
+#resultats {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
 }
 </style>
