@@ -15,7 +15,7 @@ const routes = [
     children: [
       { path: '', component: () => import('pages/BloggerList.vue') },
       { path: '/bloggerForm', component: () => import('pages/BloggerForm.vue') },
-      { path: '/calculadora', component: () => import('pages/CalculadoraCalories.vue') },
+      { path: '/calculadora', component: () => import('pages/CalculadoraCalories.vue') }
 
     ],
     meta: {

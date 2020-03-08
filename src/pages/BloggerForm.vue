@@ -32,6 +32,20 @@
         ['save', 'translate']
       ]"
     />
+    <section id="recordAudio">
+      <video ref="camera" :width="640" :height="480" autoplay></video>
+      <div id="buttons">
+        <q-btn
+          id="record"
+          @click="recordAudio"
+          color="white"
+          text-color="black"
+          label="Start Record"
+        />
+        <q-btn id="stop" @click="stopAudio" color="primary" label="Stop Record" />
+      </div>
+      <div id="soundClips"></div>
+    </section>
   </div>
 </template>
 
@@ -51,7 +65,9 @@ export default {
       titolPost: "",
       descripcioPost: "",
       selectIdiomes: null,
-      idiomes: []
+      idiomes: [],
+      mediaRecorder: "",
+      chunksAudio: []
     };
   },
   methods: {
@@ -103,6 +119,98 @@ export default {
 
       this.titolPost = titolTraduit.data;
       this.descripcioPost = cosTraduit.data;
+    },
+    async createCameraElement() {
+      if (navigator.mediaDevices) {
+        let constraintsAudio = {
+          audio: true
+        };
+
+        let constraintsVideo = {
+          audio: false,
+          video: {
+            width: {
+              min: 640
+            },
+            height: {
+              min: 480
+            }
+          }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraintsVideo).then(stream => {
+          this.$refs.camera.srcObject = stream;
+        });
+
+        const recorder = await navigator.mediaDevices.getUserMedia(
+          constraintsAudio
+        );
+        this.mediaRecorder = new MediaRecorder(recorder);
+      }
+    },
+    recordAudio: function() {
+      this.mediaRecorder.start();
+      console.log(this.mediaRecorder);
+      console.log("recorder started");
+    },
+    stopAudio: async function() {
+      this.mediaRecorder.stop();
+      console.log(this.mediaRecorder);
+    },
+    uploadAudio: async function(blob) {
+      let apiUrl = "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php";
+
+      //Cream el formData amb les caracteristiques que es demana
+      let formData = new FormData();
+      formData.append("arxiu", blob);
+      formData.append("MethodName", "transcribe_sync");
+      formData.append("params", "{}");
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        body: formData
+      });
+
+      const responseJSON = await response.json();
+
+      return responseJSON;
+    },
+    loadAudio: function() {
+      //let chunks = [];
+      this.mediaRecorder.onstop = this.onStop;
+
+      //Quan estigui gravant, anirem fent push dels chunks
+      this.mediaRecorder.ondataavailable = this.ondataavailable;
+    },
+    onStop: async function(e) {
+      console.log("recorder stopped");
+
+      let blob = new Blob(this.chunksAudio, {
+        type: "audio/webm; codecs=opus"
+      });
+      this.chunksAudio = [];
+      console.log(blob);
+      const transcripcioServidor = await this.uploadAudio(blob);
+      console.log(transcripcioServidor);
+      if (transcripcioServidor[0].confianca > 0.7) {
+        if (this.selectIdiomes) {
+          const codeIdiomaOriginal = "es";
+          const codeIdiomaATraduir = this.selectIdiomes[1].value;
+
+          const cosTraduit = await translate(
+            codeIdiomaOriginal,
+            codeIdiomaATraduir,
+            transcripcioServidor[0].transcripcio
+          );
+          this.descripcioPost = cosTraduit.data;
+        } else {
+          this.descripcioPost = transcripcioServidor[0].transcripcio;
+        }
+      }
+    },
+    ondataavailable: function(e) {
+      console.log(e.data);
+      this.chunksAudio.push(e.data);
     }
   },
   async mounted() {
@@ -115,6 +223,8 @@ export default {
       };
       this.idiomes.push(obj);
     });
+    await this.createCameraElement();
+    await this.loadAudio();
   }
 };
 </script>
