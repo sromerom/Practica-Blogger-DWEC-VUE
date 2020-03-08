@@ -50,14 +50,9 @@
 </template>
 
 <script>
+import axios from "axios";
 import { Post } from "../boot/post.js";
-import {
-  createPost,
-  updatePost,
-  getPostById,
-  getLanguages,
-  translate
-} from "../boot/postServei.js";
+//import { createPost, getLanguages, translate } from "../boot/postServei.js";
 export default {
   name: "BloggerForm",
   data() {
@@ -71,6 +66,75 @@ export default {
     };
   },
   methods: {
+    async getBlogId() {
+      let response = await axios({
+        method: "GET",
+        url: "https://www.googleapis.com/blogger/v3/users/self/blogs",
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("tokenAccess")
+        }
+      });
+
+      return response.data.items[0].id;
+    },
+    async createPost(post) {
+      const idBlog = await this.getBlogId();
+      const url = `https://www.googleapis.com/blogger/v3/blogs/${idBlog}/posts/`;
+      const toJSON = JSON.stringify({
+        kind: "blogger#post",
+        blog: {
+          id: idBlog
+        },
+        title: post.title,
+        content: post.content,
+        labels: post.labels
+      });
+
+      await axios({
+        method: "POST",
+        url: url,
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("tokenAccess"),
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        data: toJSON
+      });
+    },
+    async getLanguages() {
+      let response = await axios({
+        method: "POST",
+        url: "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php",
+        headers: {
+          "Content-type": "application/x-www-form-urlencoded"
+        },
+        data: JSON.stringify({
+          MethodName: "languages",
+          params: ""
+        })
+      });
+
+      return response;
+    },
+    async translate(source, target, text) {
+      let response = await axios({
+        method: "POST",
+        url: "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php",
+        headers: {
+          "Content-type": "application/x-www-form-urlencoded"
+        },
+        data: JSON.stringify({
+          MethodName: "translate",
+          params: {
+            source: source,
+            target: target,
+            text: text
+          }
+        })
+      });
+
+      return response;
+    },
     async saveWork() {
       const tagIdiomesSeleccionat = [
         this.selectIdiomes[0].value,
@@ -78,7 +142,7 @@ export default {
       ];
       if (this.titolPost != "" || this.descripcioPost != "") {
         console.log("Esta buits!!");
-        await createPost(
+        await this.createPost(
           new Post(
             undefined,
             undefined,
@@ -106,12 +170,12 @@ export default {
       console.log(codeIdiomaOriginal, codeIdiomaATraduir);
 
       //Traduim el titol i el content del post
-      const titolTraduit = await translate(
+      const titolTraduit = await this.translate(
         codeIdiomaOriginal,
         codeIdiomaATraduir,
         this.titolPost
       );
-      const cosTraduit = await translate(
+      const cosTraduit = await this.translate(
         codeIdiomaOriginal,
         codeIdiomaATraduir,
         this.descripcioPost
@@ -197,7 +261,7 @@ export default {
           const codeIdiomaOriginal = "es";
           const codeIdiomaATraduir = this.selectIdiomes[1].value;
 
-          const cosTraduit = await translate(
+          const cosTraduit = await this.translate(
             codeIdiomaOriginal,
             codeIdiomaATraduir,
             transcripcioServidor[0].transcripcio
@@ -214,7 +278,7 @@ export default {
     }
   },
   async mounted() {
-    const allLanguages = await getLanguages();
+    const allLanguages = await this.getLanguages();
     allLanguages.data.forEach(language => {
       let obj = {
         //code, name

@@ -128,16 +128,8 @@
   </q-page>
 </template>
 <script>
+import axios from "axios";
 import { Post } from "../boot/post.js";
-import {
-  getBlogId,
-  getPost,
-  updatePost,
-  deletePost,
-  getLanguages,
-  getPostById,
-  translate
-} from "../boot/postServei.js";
 export default {
   name: "BloggerList",
   data() {
@@ -182,6 +174,145 @@ export default {
     };
   },
   methods: {
+    async getBlogId() {
+      let response = await axios({
+        method: "GET",
+        url: "https://www.googleapis.com/blogger/v3/users/self/blogs",
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("tokenAccess")
+        }
+      });
+
+      return response.data.items[0].id;
+    },
+    async getPost(blogId) {
+      const url =
+        "https://www.googleapis.com/blogger/v3/blogs/" + blogId + "/posts";
+
+      let response = await axios({
+        method: "GET",
+        url: url,
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("tokenAccess")
+        }
+      });
+
+      let fetchToObject = response.data.items.map(post => {
+        return new Post(
+          post.id,
+          post.blog.id,
+          post.author,
+          post.published,
+          post.updated,
+          post.url,
+          post.title,
+          post.content,
+          post.labels
+        );
+      });
+
+      return fetchToObject;
+    },
+    async updatePost(post) {
+      const url = `https://www.googleapis.com/blogger/v3/blogs/${post.idBlog}/posts/${post.idPost}`;
+
+      const toJSON = JSON.stringify({
+        id: post.idPost,
+        kind: "blogger#post",
+        blog: {
+          id: post.idBlog
+        },
+        author: post.author,
+        published: post.published,
+        url: post.url,
+        selfLink: url,
+        title: post.title,
+        content: post.content,
+        labels: post.labels
+      });
+
+      await axios({
+        method: "PUT",
+        url: url,
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("tokenAccess"),
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        data: toJSON
+      });
+    },
+    async deletePost(idBlog, idPost) {
+      const url = `https://www.googleapis.com/blogger/v3/blogs/${idBlog}/posts/${idPost}`;
+
+      await axios({
+        method: "DELETE",
+        url: url,
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("tokenAccess"),
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        }
+      });
+    },
+    async getLanguages() {
+      let response = await axios({
+        method: "POST",
+        url: "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php",
+        headers: {
+          "Content-type": "application/x-www-form-urlencoded"
+        },
+        data: JSON.stringify({
+          MethodName: "languages",
+          params: ""
+        })
+      });
+
+      return response;
+    },
+    async getPostById(postId) {
+      const idBlog = await this.getBlogId();
+      const url = `https://www.googleapis.com/blogger/v3/blogs/${idBlog}/posts/${postId}`;
+
+      let response = await axios({
+        method: "GET",
+        url: url,
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("tokenAccess")
+        }
+      });
+
+      return new Post(
+        response.data.id,
+        response.data.blog.id,
+        response.data.author,
+        response.data.published,
+        response.data.updated,
+        response.data.url,
+        response.data.title,
+        response.data.content,
+        response.data.labels
+      );
+    },
+    async translate(source, target, text) {
+      let response = await axios({
+        method: "POST",
+        url: "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php",
+        headers: {
+          "Content-type": "application/x-www-form-urlencoded"
+        },
+        data: JSON.stringify({
+          MethodName: "translate",
+          params: {
+            source: source,
+            target: target,
+            text: text
+          }
+        })
+      });
+
+      return response;
+    },
     async anemEditar() {
       await this.carregaPost(this.propActual.row.id);
       await this.createCameraElement();
@@ -189,7 +320,7 @@ export default {
     },
     async deleteRow() {
       const idPostActual = this.propActual.row.id;
-      await deletePost(this.blogId, idPostActual);
+      await this.deletePost(this.blogId, idPostActual);
       //Esta bien?
       this.data = [];
       await this.loadPosts();
@@ -199,8 +330,8 @@ export default {
       });
     },
     async loadPosts() {
-      this.blogId = await getBlogId();
-      const posts = await getPost(this.blogId);
+      this.blogId = await this.getBlogId();
+      const posts = await this.getPost(this.blogId);
       posts.map(post => {
         const objecteAfegir = {
           id: post.idPost,
@@ -217,8 +348,8 @@ export default {
           this.selectIdiomes[0].value,
           this.selectIdiomes[1].value
         ];
-        const post = await getPostById(this.propActual.row.id);
-        await updatePost(
+        const post = await this.getPostById(this.propActual.row.id);
+        await this.updatePost(
           new Post(
             post.idPost,
             post.idBlog,
@@ -242,14 +373,14 @@ export default {
     async carregaPost(idPost) {
       console.log("Entro");
       console.log(idPost);
-      const post = await getPostById(idPost);
+      const post = await this.getPostById(idPost);
 
-      const contentTraduit = await translate(
+      const contentTraduit = await this.translate(
         post.labels[1],
         post.labels[0],
         post.content
       );
-      const titleTraduit = await translate(
+      const titleTraduit = await this.translate(
         post.labels[1],
         post.labels[0],
         post.title
@@ -290,12 +421,12 @@ export default {
       console.log(codeIdiomaOriginal, codeIdiomaATraduir);
 
       //Traduim el titol i el content del post
-      const titolTraduit = await translate(
+      const titolTraduit = await this.translate(
         codeIdiomaOriginal,
         codeIdiomaATraduir,
         this.titolPost
       );
-      const cosTraduit = await translate(
+      const cosTraduit = await this.translate(
         codeIdiomaOriginal,
         codeIdiomaATraduir,
         this.descripcioPost
@@ -381,7 +512,7 @@ export default {
           const codeIdiomaOriginal = "es";
           const codeIdiomaATraduir = this.selectIdiomes[1].value;
 
-          const cosTraduit = await translate(
+          const cosTraduit = await this.translate(
             codeIdiomaOriginal,
             codeIdiomaATraduir,
             transcripcioServidor[0].transcripcio
@@ -402,7 +533,7 @@ export default {
     await this.loadPosts();
 
     //Cargam els idiomes del input
-    const allLanguages = await getLanguages();
+    const allLanguages = await this.getLanguages();
     allLanguages.data.forEach(language => {
       let obj = {
         //code, name
