@@ -155,7 +155,8 @@ export default {
         confidence: ""
       },
       classifier: null,
-      llistatAliments: []
+      llistatAliments: [],
+      alimentActual: ""
     };
   },
   methods: {
@@ -231,7 +232,7 @@ export default {
       this.classifyVideo();
     },
     async calculaDieta() {
-      let aliments = await this.getData();
+      let aliments = await this.getAllAliments();
       this.caloriesDieta = await this.getCalories(aliments);
     },
     eliminaDieta() {
@@ -241,8 +242,10 @@ export default {
         type: "negative",
         message: `La dieta s'ha eliminat correctament`
       });
+      window.location.reload();
     },
     addData(alimentNou) {
+      this.alimentActual = alimentNou;
       console.log(alimentNou);
       const db = this.request.result;
 
@@ -252,30 +255,34 @@ export default {
       //Abans d'afegir el nou aliment, s'ha de veure si l'aliment es troba en la bbdd o no
       const aliments = objectStore.getAll();
 
-      aliments.onsuccess = function(e) {
-        const totsAliments = aliments.result;
-        let existeix = false;
-
-        totsAliments.map(aliment => {
-          //return aliment.nom === alimentNou;
-          if (aliment.nom === alimentNou) {
-            existeix = true;
-          }
-        });
-
-        //Si no existeix, es comença a introduir l'aliment a la base de dades
-        if (!existeix) {
-          const transaction = db.transaction("aliment", "readwrite");
-          const objectStore = transaction.objectStore("aliment");
-
-          const newAliment = {
-            nom: alimentNou
-          };
-          objectStore.add(newAliment);
-        }
-      };
+      aliments.onsuccess = this.onsuccess;
     },
-    getData() {
+    onsuccess: function(e) {
+      const db = this.request.result;
+      console.log(e);
+      const totsAliments = e.target.result;
+      let existeix = false;
+
+      totsAliments.map(aliment => {
+        //return aliment.nom === alimentNou;
+        if (aliment.nom === this.alimentActual) {
+          existeix = true;
+        }
+      });
+
+      //Si no existeix, es comença a introduir l'aliment a la base de dades
+      if (!existeix) {
+        const transaction = db.transaction("aliment", "readwrite");
+        const objectStore = transaction.objectStore("aliment");
+
+        const newAliment = {
+          nom: this.alimentActual
+        };
+        objectStore.add(newAliment);
+        this.llistatAliments.push(this.alimentActual);
+      }
+    },
+    getAllAliments() {
       return new Promise(function(resolve, reject) {
         var open = window.indexedDB.open("Aliments", 1);
         open.onsuccess = function() {
@@ -363,7 +370,7 @@ export default {
       });
     };
 
-    this.getData().then(this.loadData);
+    this.getAllAliments().then(this.loadData);
   }
 };
 </script>
@@ -434,10 +441,11 @@ export default {
 #resultats h3 {
   font-size: 1em;
 }
+
 #resultats {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
 }
 </style>
