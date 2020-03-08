@@ -5,12 +5,24 @@
       filled
       v-model="selectIdiomes"
       multiple
+      use-input
+      input-debounce="0"
+      label="Idiomes"
       :options="idiomes"
       counter
       max-values="2"
-      hint="Max 2 selections"
+      hint="Idioma original, idioma a traduir"
+      @filter="filterSelect"
       style="width: 250px"
-    />
+      behavior="menu"
+    >
+      <template v-slot:no-option>
+        <q-item>
+          <q-item-section class="text-grey">No results</q-item-section>
+        </q-item>
+      </template>
+    </q-select>
+
     <q-editor
       v-model="descripcioPost"
       :definitions="{
@@ -46,6 +58,7 @@
       </div>
       <div id="soundClips"></div>
     </section>
+    {{idiomesFilter}}
   </div>
 </template>
 
@@ -61,11 +74,28 @@ export default {
       descripcioPost: "",
       selectIdiomes: null,
       idiomes: [],
+      idiomesFilter: [],
       mediaRecorder: "",
       chunksAudio: []
     };
   },
   methods: {
+    filterSelect(val, update) {
+      if (val === "") {
+        update(() => {
+          this.idiomes = this.idiomesFilter;
+        });
+        return;
+      }
+
+      update(() => {
+        const needle = val.toLowerCase();
+        this.idiomes = this.idiomesFilter.filter(idioma => {
+          const label = idioma.label.toLowerCase();
+          return label.indexOf(needle) > -1;
+        });
+      });
+    },
     async getBlogId() {
       let response = await axios({
         method: "GET",
@@ -287,6 +317,7 @@ export default {
       };
       this.idiomes.push(obj);
     });
+    this.idiomesFilter = this.idiomes;
     await this.createCameraElement();
     await this.loadAudio();
   }

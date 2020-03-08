@@ -16,9 +16,8 @@
         <div class="col-6">
           <draggable
             id="opcionsDrag"
-            class="list-group"
             tag="div"
-            v-model="list"
+            v-model="activitatDiaria"
             v-bind="dragOptions"
             :move="onMove"
             @start="isDragging=true"
@@ -28,8 +27,7 @@
               <div
                 :id="element.id"
                 :data-exercici="element.num"
-                class="list-group-item"
-                v-for="element in list"
+                v-for="element in activitatDiaria"
                 :key="element.order"
               >
                 {{element.name}}
@@ -40,14 +38,9 @@
         </div>
 
         <div class="col-6">
-          <draggable v-model="list2" v-bind="dragOptions" :move="onMove">
-            <transition-group id="destiDrag" name="no" class="list-group" tag="div">
-              <div
-                v-bind:id="element.id"
-                class="list-group-item"
-                v-for="element in list2"
-                :key="element.order"
-              >
+          <draggable v-model="insereixActivitat" v-bind="dragOptions" :move="onMove">
+            <transition-group id="destiDrag" name="no" tag="div">
+              <div v-bind:id="element.id" v-for="element in insereixActivitat" :key="element.order">
                 {{element.name}}
                 <span class="badge">{{element.order}}</span>
               </div>
@@ -136,17 +129,7 @@ export default {
       radioSexe: "home",
       caloriesNecesaries: "",
       caloriesDieta: "",
-      request: "",
-      list: noms.map((name, index) => {
-        return {
-          id: name.id,
-          name: name.nom,
-          num: name.num,
-          order: index + 1,
-          fixed: false
-        };
-      }),
-      list2: [],
+      requestIndexedDB: "",
       editable: true,
       isDragging: false,
       delayedDragging: false,
@@ -156,7 +139,17 @@ export default {
       },
       classifier: null,
       llistatAliments: [],
-      alimentActual: ""
+      alimentActual: "",
+      activitatDiaria: noms.map((name, index) => {
+        return {
+          id: name.id,
+          name: name.nom,
+          num: name.num,
+          order: index + 1,
+          fixed: false
+        };
+      }),
+      insereixActivitat: []
     };
   },
   methods: {
@@ -170,15 +163,10 @@ export default {
       }
 
       console.log(tmb);
-      console.log(this.list2[0].num);
-      console.log(parseInt(tmb) * parseInt(this.list2[0].num));
-      this.caloriesNecesaries = tmb * this.list2[0].num;
+      console.log(this.insereixActivitat[0].num);
+      console.log(parseInt(tmb) * parseInt(this.insereixActivitat[0].num));
+      this.caloriesNecesaries = tmb * this.insereixActivitat[0].num;
       tmb = 0;
-    },
-    orderList() {
-      this.list = this.list.sort((one, two) => {
-        return one.order - two.order;
-      });
     },
     onMove({ relatedContext, draggedContext }) {
       const relatedElement = relatedContext.element;
@@ -226,7 +214,7 @@ export default {
       //Si la confiança es major al 0.70, començarem el proces d'introducció a la base de dades
 
       if (results[0].confidence > 0.7) {
-        this.addData(results[0].label);
+        this.addAliment(results[0].label);
       }
 
       this.classifyVideo();
@@ -244,10 +232,10 @@ export default {
       });
       window.location.reload();
     },
-    addData(alimentNou) {
+    addAliment(alimentNou) {
       this.alimentActual = alimentNou;
       console.log(alimentNou);
-      const db = this.request.result;
+      const db = this.requestIndexedDB.result;
 
       const transaction = db.transaction("aliment", "readwrite");
       const objectStore = transaction.objectStore("aliment");
@@ -258,7 +246,7 @@ export default {
       aliments.onsuccess = this.onsuccess;
     },
     onsuccess: function(e) {
-      const db = this.request.result;
+      const db = this.requestIndexedDB.result;
       console.log(e);
       const totsAliments = e.target.result;
       let existeix = false;
@@ -311,7 +299,7 @@ export default {
         };
       });
     },
-    loadData(aliments) {
+    loadAliments(aliments) {
       aliments.map(aliment => {
         this.llistatAliments.push(aliment.nom);
       });
@@ -361,16 +349,16 @@ export default {
   mounted() {
     this.createCameraElement();
     this.setupML5();
-    this.request = window.indexedDB.open("Aliments", 1);
+    this.requestIndexedDB = window.indexedDB.open("Aliments", 1);
 
-    this.request.onupgradeneeded = async function(event) {
+    this.requestIndexedDB.onupgradeneeded = async function(event) {
       const db = event.target.result;
       let objectStore = db.createObjectStore("aliment", {
         autoIncrement: true
       });
     };
 
-    this.getAllAliments().then(this.loadData);
+    this.getAllAliments().then(this.loadAliments);
   }
 };
 </script>

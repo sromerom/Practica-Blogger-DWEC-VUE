@@ -1,7 +1,14 @@
 <template>
   <q-page>
     <div class="q-pa-md">
-      <q-table title="Receptes" :data="data" :columns="columns" row-key="id">
+      <q-table title="Receptes" :data="taulaData" :columns="columns" row-key="id" :filter="taulaFilter">
+        <template v-slot:top-right>
+          <q-input borderless dense debounce="300" v-model="taulaFilter" placeholder="Search">
+            <template v-slot:append>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        </template>
         <template v-slot:body-cell-actions="props">
           <q-td :props="props">
             <q-btn
@@ -168,7 +175,8 @@ export default {
         },
         { name: "actions", label: "Actions", field: "", align: "center" }
       ],
-      data: [],
+      taulaData: [],
+      taulaFilter: "",
       mediaRecorder: "",
       chunksAudio: []
     };
@@ -322,7 +330,7 @@ export default {
       const idPostActual = this.propActual.row.id;
       await this.deletePost(this.blogId, idPostActual);
       //Esta bien?
-      this.data = [];
+      this.taulaData = [];
       await this.loadPosts();
       this.$q.notify({
         type: "negative",
@@ -339,7 +347,7 @@ export default {
           idiomaOriginal: post.labels[0],
           idiomaTraduit: post.labels[1]
         };
-        this.data.push(objecteAfegir);
+        this.taulaData.push(objecteAfegir);
       });
     },
     async updateWork() {
@@ -363,7 +371,7 @@ export default {
           )
         );
       }
-      this.data = [];
+      this.taulaData = [];
       await this.loadPosts();
       this.$q.notify({
         type: "warning",
