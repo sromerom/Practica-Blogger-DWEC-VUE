@@ -1,7 +1,13 @@
 <template>
   <q-page>
     <div class="q-pa-md">
-      <q-table title="Receptes" :data="taulaData" :columns="columns" row-key="id" :filter="taulaFilter">
+      <q-table
+        title="Receptes"
+        :data="taulaData"
+        :columns="columns"
+        row-key="id"
+        :filter="taulaFilter"
+      >
         <template v-slot:top-right>
           <q-input borderless dense debounce="300" v-model="taulaFilter" placeholder="Search">
             <template v-slot:append>
@@ -113,7 +119,6 @@
                 ['bold', 'italic', 'strike', 'underline'],
                 ['save', 'translate']]"
             />
-            <p>{{selectIdiomes}}</p>
             <section id="recordAudio">
               <video ref="camera" :width="640" :height="480" autoplay></video>
               <div id="buttons">
@@ -182,6 +187,216 @@ export default {
     };
   },
   methods: {
+    async anemEditar() {
+      await this.carregaPost(this.propActual.row.id);
+      await this.createCameraElement();
+      await this.loadAudio();
+    },
+    async deleteRow() {
+      const idPostActual = this.propActual.row.id;
+      await this.deletePost(this.blogId, idPostActual);
+      this.taulaData = [];
+      await this.loadPosts();
+      this.$q.notify({
+        type: "negative",
+        message: `El post ha sigut eliminat amb exit`
+      });
+    },
+    async loadPosts() {
+      this.blogId = await this.getBlogId();
+      const posts = await this.getPost(this.blogId);
+      posts.map(post => {
+        const objecteAfegir = {
+          id: post.idPost,
+          name: post.title,
+          idiomaOriginal: post.labels[0],
+          idiomaTraduit: post.labels[1]
+        };
+        this.taulaData.push(objecteAfegir);
+      });
+    },
+    async updateWork() {
+      if (this.titolPost != "" || this.descripcioPost != "") {
+        const tagIdiomesSeleccionat = [
+          this.selectIdiomes[0].value,
+          this.selectIdiomes[1].value
+        ];
+        const post = await this.getPostById(this.propActual.row.id);
+        await this.updatePost(
+          new Post(
+            post.idPost,
+            post.idBlog,
+            post.author,
+            post.published,
+            undefined,
+            post.url,
+            this.titolPost,
+            this.descripcioPost,
+            tagIdiomesSeleccionat
+          )
+        );
+      } else {
+        this.$q.notify({
+          type: "info",
+          message: `Omple tots els camps necessaris`
+        });
+      }
+      this.taulaData = [];
+      await this.loadPosts();
+      this.$q.notify({
+        type: "warning",
+        message: `S'ha modificat correctament el post`
+      });
+    },
+    async carregaPost(idPost) {
+      const post = await this.getPostById(idPost);
+
+      const contentTraduit = await this.translate(
+        post.labels[1],
+        post.labels[0],
+        post.content
+      );
+      const titleTraduit = await this.translate(
+        post.labels[1],
+        post.labels[0],
+        post.title
+      );
+
+      this.descripcioPost = contentTraduit.data;
+      this.titolPost = titleTraduit.data;
+
+      /*
+      let labelIdiomaElegits = [];
+      this.idiomes.forEach(idioma => {
+        if (
+          idioma.value === post.labels[0] ||
+          idioma.value === post.labels[1]
+        ) {
+          labelIdiomaElegits.push(idioma.label);
+        }
+      });
+
+      */
+      this.selectIdiomes = [
+        {
+          label: post.labels[0],
+          value: post.labels[0]
+        },
+        {
+          label: post.labels[1],
+          value: post.labels[1]
+        }
+      ];
+    },
+    async translateIt() {
+      const codeIdiomaOriginal = this.selectIdiomes[0].value;
+      const codeIdiomaATraduir = this.selectIdiomes[1].value;
+
+      //Traduim el titol i el content del post
+      const titolTraduit = await this.translate(
+        codeIdiomaOriginal,
+        codeIdiomaATraduir,
+        this.titolPost
+      );
+      const cosTraduit = await this.translate(
+        codeIdiomaOriginal,
+        codeIdiomaATraduir,
+        this.descripcioPost
+      );
+
+      this.titolPost = titolTraduit.data;
+      this.descripcioPost = cosTraduit.data;
+    },
+    async createCameraElement() {
+      if (navigator.mediaDevices) {
+        let constraintsAudio = {
+          audio: true
+        };
+
+        let constraintsVideo = {
+          audio: false,
+          video: {
+            width: {
+              min: 640
+            },
+            height: {
+              min: 480
+            }
+          }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraintsVideo).then(stream => {
+          this.$refs.camera.srcObject = stream;
+        });
+
+        const recorder = await navigator.mediaDevices.getUserMedia(
+          constraintsAudio
+        );
+        this.mediaRecorder = new MediaRecorder(recorder);
+      }
+    }, //media recorder
+    recordAudio: function() {
+      this.mediaRecorder.start();
+      console.log("recorder started");
+    },
+    stopAudio: async function() {
+      this.mediaRecorder.stop();
+    },
+    uploadAudio: async function(blob) {
+      let apiUrl = "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php";
+
+      //Cream el formData amb les caracteristiques que es demana
+      let formData = new FormData();
+      formData.append("arxiu", blob);
+      formData.append("MethodName", "transcribe_sync");
+      formData.append("params", "{}");
+
+      const response = await axios({
+        method: "POST",
+        url: apiUrl,
+        headers: {
+          "Content-type": "application/x-www-form-urlencoded"
+        },
+        data: formData
+      });
+
+
+      return response.data;
+    },
+    loadAudio: function() {
+      //let chunks = [];
+      this.mediaRecorder.onstop = this.onStop;
+
+      //Quan estigui gravant, anirem fent push dels chunks
+      this.mediaRecorder.ondataavailable = this.ondataavailable;
+    },
+    onStop: async function(e) {
+      console.log("recorder stopped");
+
+      let blob = new Blob(this.chunksAudio, {
+        type: "audio/webm; codecs=opus"
+      });
+      this.chunksAudio = [];
+      const transcripcioServidor = await this.uploadAudio(blob);
+      if (transcripcioServidor[0].confianca > 0.7) {
+        if (this.selectIdiomes) {
+          const codeIdiomaOriginal = "es";
+          const codeIdiomaATraduir = this.selectIdiomes[1].value;
+
+          const cosTraduit = await this.translate(
+            codeIdiomaOriginal,
+            codeIdiomaATraduir,
+            transcripcioServidor[0].transcripcio
+          );
+          this.descripcioPost = cosTraduit.data;
+        } else {
+          this.descripcioPost = transcripcioServidor[0].transcripcio;
+        }
+      }
+    },
+    ondataavailable: function(e) {
+      this.chunksAudio.push(e.data);
+    }, //A partir d'aqui tots el metode que fan servir axios
     async getBlogId() {
       let response = await axios({
         method: "GET",
@@ -320,220 +535,6 @@ export default {
       });
 
       return response;
-    },
-    async anemEditar() {
-      await this.carregaPost(this.propActual.row.id);
-      await this.createCameraElement();
-      await this.loadAudio();
-    },
-    async deleteRow() {
-      const idPostActual = this.propActual.row.id;
-      await this.deletePost(this.blogId, idPostActual);
-      //Esta bien?
-      this.taulaData = [];
-      await this.loadPosts();
-      this.$q.notify({
-        type: "negative",
-        message: `El post ha sigut eliminat amb exit`
-      });
-    },
-    async loadPosts() {
-      this.blogId = await this.getBlogId();
-      const posts = await this.getPost(this.blogId);
-      posts.map(post => {
-        const objecteAfegir = {
-          id: post.idPost,
-          name: post.title,
-          idiomaOriginal: post.labels[0],
-          idiomaTraduit: post.labels[1]
-        };
-        this.taulaData.push(objecteAfegir);
-      });
-    },
-    async updateWork() {
-      if (this.titolPost != "" || this.descripcioPost != "") {
-        const tagIdiomesSeleccionat = [
-          this.selectIdiomes[0].value,
-          this.selectIdiomes[1].value
-        ];
-        const post = await this.getPostById(this.propActual.row.id);
-        await this.updatePost(
-          new Post(
-            post.idPost,
-            post.idBlog,
-            post.author,
-            post.published,
-            undefined,
-            post.url,
-            this.titolPost,
-            this.descripcioPost,
-            tagIdiomesSeleccionat
-          )
-        );
-      }
-      this.taulaData = [];
-      await this.loadPosts();
-      this.$q.notify({
-        type: "warning",
-        message: `S'ha modificat correctament el post`
-      });
-    },
-    async carregaPost(idPost) {
-      console.log("Entro");
-      console.log(idPost);
-      const post = await this.getPostById(idPost);
-
-      const contentTraduit = await this.translate(
-        post.labels[1],
-        post.labels[0],
-        post.content
-      );
-      const titleTraduit = await this.translate(
-        post.labels[1],
-        post.labels[0],
-        post.title
-      );
-
-      this.descripcioPost = contentTraduit.data;
-      this.titolPost = titleTraduit.data;
-
-      /*
-      let labelIdiomaElegits = [];
-      this.idiomes.forEach(idioma => {
-        if (
-          idioma.value === post.labels[0] ||
-          idioma.value === post.labels[1]
-        ) {
-          labelIdiomaElegits.push(idioma.label);
-        }
-      });
-
-      */
-      console.log(post);
-      this.selectIdiomes = [
-        {
-          label: post.labels[0],
-          value: post.labels[0]
-        },
-        {
-          label: post.labels[1],
-          value: post.labels[1]
-        }
-      ];
-    },
-    async translateIt() {
-      console.log(this.selectIdiomes);
-
-      const codeIdiomaOriginal = this.selectIdiomes[0].value;
-      const codeIdiomaATraduir = this.selectIdiomes[1].value;
-      console.log(codeIdiomaOriginal, codeIdiomaATraduir);
-
-      //Traduim el titol i el content del post
-      const titolTraduit = await this.translate(
-        codeIdiomaOriginal,
-        codeIdiomaATraduir,
-        this.titolPost
-      );
-      const cosTraduit = await this.translate(
-        codeIdiomaOriginal,
-        codeIdiomaATraduir,
-        this.descripcioPost
-      );
-
-      this.titolPost = titolTraduit.data;
-      this.descripcioPost = cosTraduit.data;
-    },
-    async createCameraElement() {
-      if (navigator.mediaDevices) {
-        let constraintsAudio = {
-          audio: true
-        };
-
-        let constraintsVideo = {
-          audio: false,
-          video: {
-            width: {
-              min: 640
-            },
-            height: {
-              min: 480
-            }
-          }
-        };
-
-        navigator.mediaDevices.getUserMedia(constraintsVideo).then(stream => {
-          this.$refs.camera.srcObject = stream;
-        });
-
-        const recorder = await navigator.mediaDevices.getUserMedia(
-          constraintsAudio
-        );
-        this.mediaRecorder = new MediaRecorder(recorder);
-      }
-    },
-    recordAudio: function() {
-      this.mediaRecorder.start();
-      console.log(this.mediaRecorder);
-      console.log("recorder started");
-    },
-    stopAudio: async function() {
-      this.mediaRecorder.stop();
-      console.log(this.mediaRecorder);
-    },
-    uploadAudio: async function(blob) {
-      let apiUrl = "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php";
-
-      //Cream el formData amb les caracteristiques que es demana
-      let formData = new FormData();
-      formData.append("arxiu", blob);
-      formData.append("MethodName", "transcribe_sync");
-      formData.append("params", "{}");
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        body: formData
-      });
-
-      const responseJSON = await response.json();
-
-      return responseJSON;
-    },
-    loadAudio: function() {
-      //let chunks = [];
-      this.mediaRecorder.onstop = this.onStop;
-
-      //Quan estigui gravant, anirem fent push dels chunks
-      this.mediaRecorder.ondataavailable = this.ondataavailable;
-    },
-    onStop: async function(e) {
-      console.log("recorder stopped");
-
-      let blob = new Blob(this.chunksAudio, {
-        type: "audio/webm; codecs=opus"
-      });
-      this.chunksAudio = [];
-      console.log(blob);
-      const transcripcioServidor = await this.uploadAudio(blob);
-      console.log(transcripcioServidor);
-      if (transcripcioServidor[0].confianca > 0.7) {
-        if (this.selectIdiomes) {
-          const codeIdiomaOriginal = "es";
-          const codeIdiomaATraduir = this.selectIdiomes[1].value;
-
-          const cosTraduit = await this.translate(
-            codeIdiomaOriginal,
-            codeIdiomaATraduir,
-            transcripcioServidor[0].transcripcio
-          );
-          this.descripcioPost = cosTraduit.data;
-        } else {
-          this.descripcioPost = transcripcioServidor[0].transcripcio;
-        }
-      }
-    },
-    ondataavailable: function(e) {
-      console.log(e.data);
-      this.chunksAudio.push(e.data);
     }
   },
   async mounted() {

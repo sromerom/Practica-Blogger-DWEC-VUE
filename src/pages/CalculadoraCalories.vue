@@ -29,10 +29,7 @@
                 :data-exercici="element.num"
                 v-for="element in activitatDiaria"
                 :key="element.order"
-              >
-                {{element.name}}
-                <span class="badge">{{element.order}}</span>
-              </div>
+              >{{element.name}}</div>
             </transition-group>
           </draggable>
         </div>
@@ -40,10 +37,11 @@
         <div class="col-6">
           <draggable v-model="insereixActivitat" v-bind="dragOptions" :move="onMove">
             <transition-group id="destiDrag" name="no" tag="div">
-              <div v-bind:id="element.id" v-for="element in insereixActivitat" :key="element.order">
-                {{element.name}}
-                <span class="badge">{{element.order}}</span>
-              </div>
+              <div
+                v-bind:id="element.id"
+                v-for="element in insereixActivitat"
+                :key="element.order"
+              >{{element.name}}</div>
             </transition-group>
           </draggable>
         </div>
@@ -86,6 +84,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import draggable from "vuedraggable";
 import ml5 from "ml5";
 import p5 from "vue-p5";
@@ -154,19 +153,12 @@ export default {
   },
   methods: {
     calculaCalories: function() {
-      let tmb;
-      console.log(this.pes, this.altura, this.edat);
+      let tmb = 0;
       if (this.radioSexe === "home") {
         tmb = 10 * this.pes + 6.25 * this.altura - 5 * this.edat + 5;
       } else {
         tmb = 10 * this.pes + 6.25 * this.altura - 5 * this.edat - 161;
       }
-
-      console.log(tmb);
-      console.log(this.insereixActivitat[0].num);
-      console.log(parseInt(tmb) * parseInt(this.insereixActivitat[0].num));
-      this.caloriesNecesaries = tmb * this.insereixActivitat[0].num;
-      tmb = 0;
     },
     onMove({ relatedContext, draggedContext }) {
       const relatedElement = relatedContext.element;
@@ -210,8 +202,6 @@ export default {
     gotResult(err, results) {
       this.ml5Results.label = results[0].label;
       this.ml5Results.confidence = results[0].confidence;
-      //results[0].label + " " + nf(results[0].confidence, 0, 2);
-      //Si la confiança es major al 0.70, començarem el proces d'introducció a la base de dades
 
       if (results[0].confidence > 0.7) {
         this.addAliment(results[0].label);
@@ -234,7 +224,6 @@ export default {
     },
     addAliment(alimentNou) {
       this.alimentActual = alimentNou;
-      console.log(alimentNou);
       const db = this.requestIndexedDB.result;
 
       const transaction = db.transaction("aliment", "readwrite");
@@ -247,7 +236,6 @@ export default {
     },
     onsuccess: function(e) {
       const db = this.requestIndexedDB.result;
-      console.log(e);
       const totsAliments = e.target.result;
       let existeix = false;
 
@@ -310,20 +298,20 @@ export default {
       let arrayPromeses = [];
 
       aliments.forEach(async function(nameIngr) {
-        let alimentt = fetch(
-          `https://api.edamam.com/api/food-database/parser?app_id=${app_id}&app_key=${app_key}&ingr=${nameIngr.nom}`
-        ).then(function(resposta) {
-          return resposta.json();
+        let aliment = axios({
+          method: "GET",
+          url: `https://api.edamam.com/api/food-database/parser?app_id=${app_id}&app_key=${app_key}&ingr=${nameIngr.nom}`
         });
 
-        arrayPromeses.push(alimentt);
+        arrayPromeses.push(aliment);
       });
 
       let sumaCal = 0;
       let arrayCalories = await Promise.all(arrayPromeses);
 
       arrayCalories.map(caloria => {
-        sumaCal = sumaCal + caloria.hints[0].food.nutrients.ENERC_KCAL;
+        console.log(caloria);
+        sumaCal = sumaCal + caloria.data.hints[0].food.nutrients.ENERC_KCAL;
       });
 
       return sumaCal;

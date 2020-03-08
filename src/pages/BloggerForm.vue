@@ -58,7 +58,6 @@
       </div>
       <div id="soundClips"></div>
     </section>
-    {{idiomesFilter}}
   </div>
 </template>
 
@@ -171,7 +170,6 @@ export default {
         this.selectIdiomes[1].value
       ];
       if (this.titolPost != "" || this.descripcioPost != "") {
-        console.log("Esta buits!!");
         await this.createPost(
           new Post(
             undefined,
@@ -190,14 +188,16 @@ export default {
           type: "positive",
           message: `S'ha creat correctament el post`
         });
+      } else {
+        this.$q.notify({
+          type: "info",
+          message: `Omple tots els camps necessaris`
+        });
       }
     },
     async translateIt() {
-      console.log(this.selectIdiomes);
-
       const codeIdiomaOriginal = this.selectIdiomes[0].value;
       const codeIdiomaATraduir = this.selectIdiomes[1].value;
-      console.log(codeIdiomaOriginal, codeIdiomaATraduir);
 
       //Traduim el titol i el content del post
       const titolTraduit = await this.translate(
@@ -244,12 +244,10 @@ export default {
     },
     recordAudio: function() {
       this.mediaRecorder.start();
-      console.log(this.mediaRecorder);
       console.log("recorder started");
     },
     stopAudio: async function() {
       this.mediaRecorder.stop();
-      console.log(this.mediaRecorder);
     },
     uploadAudio: async function(blob) {
       let apiUrl = "http://server247.cfgs.esliceu.net/bloggeri18n/blogger.php";
@@ -283,9 +281,7 @@ export default {
         type: "audio/webm; codecs=opus"
       });
       this.chunksAudio = [];
-      console.log(blob);
       const transcripcioServidor = await this.uploadAudio(blob);
-      console.log(transcripcioServidor);
       if (transcripcioServidor[0].confianca > 0.7) {
         if (this.selectIdiomes) {
           const codeIdiomaOriginal = "es";
@@ -303,7 +299,6 @@ export default {
       }
     },
     ondataavailable: function(e) {
-      console.log(e.data);
       this.chunksAudio.push(e.data);
     }
   },
